@@ -1,0 +1,92 @@
+/*
+==========================================================
+COPILOT CODING RULES – READ BEFORE GENERATING CODE
+==========================================================
+
+GOAL:
+All generated code must be beginner-friendly,
+easy to read, and easy to understand.
+
+GENERAL PRINCIPLES:
+- Prioritize readability over cleverness.
+- Prefer simple solutions over advanced patterns.
+- Avoid unnecessary abstractions.
+- Write code that a beginner can understand.
+
+FUNCTION RULES:
+- One function must have ONE responsibility only.
+- A function must not exceed 14 lines (excluding JSX/return).
+- If a function becomes too large, split it into smaller helper functions.
+- Use descriptive and meaningful function names.
+- Avoid generic names like: handleData, processStuff, doSomething.
+- Every function must include a short comment explaining what it does.
+- Avoid deeply nested logic.
+- Avoid chaining too many operations in one line.
+
+STRUCTURE RULES:
+- Keep logic separated from UI when possible.
+- Use clear variable names (no single-letter variables except in loops).
+- Avoid large blocks of inline logic.
+- Break complex problems into small steps.
+
+COMMENTING RULES:
+- Every function must have a short comment above it.
+- Complex logic must be explained with inline comments.
+- Code should be understandable without external explanation.
+
+REUSABILITY RULES:
+- If logic is repeated more than once, extract it into a helper function.
+- Prefer small reusable functions over large monolithic blocks.
+
+COMPLEXITY RULES:
+- Avoid overly complex patterns.
+- Avoid advanced optimizations unless explicitly requested.
+- Do not introduce new libraries unless necessary.
+- Prefer clarity over performance tricks.
+
+NAMING RULES:
+- Use clear and descriptive names for variables and functions.
+- Boolean variables should sound like questions (isLoading, hasError).
+- Functions should describe actions (createUser, calculateTotalPrice).
+
+ERROR HANDLING RULES:
+- Every async function must use try/catch.
+- Error messages must be clear and readable.
+- Do not silently ignore errors.
+- Keep error handling simple and understandable.
+
+FORMATTING RULES:
+- Always use consistent indentation.
+- Add empty lines between logical sections.
+- Keep return statements clean and readable.
+- Avoid overly long lines.
+
+FILE ORGANIZATION RULES:
+- Large logic must be moved to separate service files.
+- Components must not contain heavy business logic.
+- Keep files small and focused.
+
+MAINTAINABILITY RULE:
+Code should be easy to modify in the future.
+If changing one small thing requires changing many files,
+the structure is wrong.
+
+SIMPLICITY OVERRIDES CLEVERNESS:
+Never generate overly advanced patterns.
+Prefer clarity over optimization.
+Beginner readability has highest priority.
+
+REACT RULES:
+- Do not create functions inside render unless necessary.
+- Keep components focused on UI.
+- Avoid unnecessary re-renders.
+- Keep hooks usage simple and predictable.
+
+
+
+FINAL RULE:
+Generated code must always be understandable by a beginner
+reading it for the first time.
+
+==========================================================
+*/

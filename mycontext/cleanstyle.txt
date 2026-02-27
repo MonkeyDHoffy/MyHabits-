@@ -1,0 +1,72 @@
+/*
+RESPONSIVE DESIGN RULES (MOBILE-FIRST):
+
+GOAL:
+The UI must work primarily on mobile phones,
+but also look good on tablets and desktop/monitor sizes.
+
+STYLING RULES:
+- Use StyleSheet.create for styles.
+- Do not use inline style objects for complex styling.
+- Keep styles together in a 'styles' object at the bottom of the file.
+- Style names must be descriptive (container, title, buttonPrimary, avatarImage).
+- If styles grow too large, move them to a separate *.styles.ts file.
+- Prefer reusing styles instead of duplicating style objects.
+
+
+GENERAL PRINCIPLES:
+- Design is mobile-first.
+- Default layout must look good on small mobile screens.
+- Larger screens (tablet/monitor) should get more spacing and centered content.
+- Do not assume a specific device resolution.
+
+LAYOUT RULES:
+- Use flexbox for layout (flex, flexDirection, justifyContent, alignItems).
+- Avoid absolute positioning whenever possible.
+- Do not hardcode positions using top/left/right/bottom, unless absolutely necessary.
+- Use flex: 1 for main containers to fill the available space.
+- Use padding and margin instead of fixed positions.
+- Avoid deeply nested Views when not necessary.
+- Use flexbox in a simple and clear way.
+- Use spacing consistently (e.g. 4/8/12/16/24).
+
+SIZE RULES:
+- Avoid fixed width and height when possible.
+- Prefer '100%' width for main containers on mobile.
+- Use maxWidth for content on larger screens (e.g. 480–600) and center it.
+- Do not rely on exact pixel-perfect layouts.
+- Use consistent spacing values (e.g. 4, 8, 12, 16, 24).
+
+TEXT & FONT RULES:
+- Use readable font sizes, not too small.
+- Do not create different font sizes for every element.
+- Use a small set of font sizes (e.g. 14, 16, 20, 24).
+
+SCROLLING RULES:
+- If content might not fit on smaller screens, use ScrollView.
+- Never assume that everything fits without scrolling.
+- Important content should be visible without requiring horizontal scrolling.
+
+IMAGE RULES:
+- Images should be responsive.
+- Prefer width: '100%' with a defined aspectRatio when possible.
+- Use resizeMode: 'contain' or 'cover' appropriately.
+- Do not hardcode image width/height for a specific screen size.
+
+LARGE SCREEN RULES (TABLET / MONITOR):
+- On wide screens, content should not stretch edge-to-edge.
+- Use maxWidth and center the main content container (alignSelf: 'center').
+- Add more padding on large screens to avoid edge-hugging UI.
+- Layout can change from single-column to side-by-side where it makes sense,
+  but must still remain readable and simple.
+
+SAFETY & CONSISTENCY:
+- Do not use magic numbers specific to one device.
+- Prefer reusable style values (spacing, maxWidth, etc.).
+- Code must remain readable and easy to adjust later.
+
+FINAL RULE:
+Responsive behavior must remain simple and predictable.
+Do not overcomplicate responsiveness with advanced patterns.
+Mobile readability and usability have the highest priority.
+*/

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Image, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { BottomDrawer } from '@/components/bottom-drawer';
+import { ScreenHeader } from '@/components/screen-header';
+import { useGame } from '@/context/game-context';
 
 type BackgroundState = 'bg1' | 'bg2' | 'bg3' | 'bg4';
 
@@ -11,6 +13,8 @@ const backgroundImages: Record<BackgroundState, number> = {
   bg3: require('@/assets/background/bg3.png'),
   bg4: require('@/assets/background/bg4.png'),
 };
+
+const BACKGROUND_ASPECT_RATIO = 1024 / 1536;
 
 // Liefert das passende Bild auf Basis des aktuellen Hintergrund-Status.
 function getBackgroundImage(backgroundState: BackgroundState): number {
@@ -25,23 +29,102 @@ function getClosedDrawerHeight(screenHeight: number): number {
   return Math.max(minHeight, Math.min(preferredHeight, maxHeight));
 }
 
+// Berechnet den vertikalen Letterbox-Abstand (oben/unten) bei contain-Darstellung.
+function getVerticalLetterboxInset(
+  containerWidth: number,
+  containerHeight: number,
+  imageAspectRatio: number
+): number {
+  if (containerWidth <= 0 || containerHeight <= 0) {
+    return 0;
+  }
+
+  const containerAspectRatio = containerWidth / containerHeight;
+
+  if (containerAspectRatio >= imageAspectRatio) {
+    return 0;
+  }
+
+  const renderedImageHeight = containerWidth / imageAspectRatio;
+  const remainingSpace = containerHeight - renderedImageHeight;
+  return Math.max(0, remainingSpace / 2);
+}
+
 // Rendert die Startseite mit einem vollständig sichtbaren Hintergrundbild.
 export default function HomeScreen() {
+  const {
+    habits,
+    run,
+    maxHP,
+    startRun,
+    advanceRunDayForDevelopment,
+    endRun,
+    resetRun,
+    toggleHabitForToday,
+  } = useGame();
   const [backgroundState] = useState<BackgroundState>('bg4');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const { height: screenHeight } = useWindowDimensions();
+  const [viewportWidth, setViewportWidth] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const imageSource = getBackgroundImage(backgroundState);
-  const closedDrawerHeight = getClosedDrawerHeight(screenHeight);
+  const effectiveWidth = viewportWidth > 0 ? viewportWidth : screenWidth;
+  const effectiveHeight = viewportHeight > 0 ? viewportHeight : screenHeight;
+  const verticalLetterboxInset = getVerticalLetterboxInset(
+    effectiveWidth,
+    effectiveHeight,
+    BACKGROUND_ASPECT_RATIO
+  );
+  const headerMinimumHeight = verticalLetterboxInset;
+  const closedDrawerHeight = Math.max(
+    getClosedDrawerHeight(effectiveHeight),
+    verticalLetterboxInset
+  );
+
+  // Startet oder setzt den Run über den rechten Header-Button.
+  function handleHeaderRightPress() {
+    if (run.isActive) {
+      resetRun();
+      return;
+    }
+
+    startRun();
+  }
 
   return (
-    <View style={styles.viewport}>
+    <View
+      style={styles.viewport}
+      onLayout={(event) => {
+        setViewportWidth(event.nativeEvent.layout.width);
+        setViewportHeight(event.nativeEvent.layout.height);
+      }}>
       <Image source={imageSource} style={styles.image} resizeMode="contain" />
+      <ScreenHeader
+        minimumHeight={headerMinimumHeight}
+        onPressRight={handleHeaderRightPress}
+        rightAccessibilityLabel={run.isActive ? 'Run zurücksetzen' : 'Run starten'}
+        isRunActive={run.isActive}
+        enemyHP={run.enemyHP}
+        maxHP={maxHP}
+        runDayNumber={run.dayNumber}
+      />
       <BottomDrawer
         isOpen={isDrawerOpen}
         onChangeOpen={setIsDrawerOpen}
         maxOpenHeight="40%"
         closedHeight={closedDrawerHeight}
+        containerHeight={effectiveHeight}
+        isRunActive={run.isActive}
+        playerHP={run.playerHP}
+        maxHP={maxHP}
+        habits={habits}
+        weeklyJokers={run.weeklyJokers}
+        dailyProgress={run.dailyProgress}
+        onStartRun={startRun}
+        onEndRun={endRun}
+        onEndDayForDevelopment={advanceRunDayForDevelopment}
+        onToggleHabitForToday={toggleHabitForToday}
       />
     </View>
   );

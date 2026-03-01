@@ -7,7 +7,6 @@ import { HPBar } from '@/components/hp-bar';
 import { ThemedText } from '@/components/themed-text';
 
 const HEADER_CONTENT_HEIGHT = 64;
-const WOOD_IMAGE_ASPECT_RATIO = 1700 / 67;
 
 type ScreenHeaderProps = {
   onPressLeft?: () => void;
@@ -36,11 +35,6 @@ function createInsetStyles(topInset: number, minimumHeight: number) {
   });
 }
 
-// Platzhalter für die rechte Header-Aktion.
-function handleRightButtonPress() {
-  return;
-}
-
 // Rendert den oberen Header mit Holz-Hintergrund und konfigurierbaren Aktionen.
 export function ScreenHeader({
   onPressLeft,
@@ -66,9 +60,6 @@ export function ScreenHeader({
 
   // Verwendet übergebene Linke-Aktion oder den Standard zur Good-Habits-Seite.
   const handleLeftButtonPress = onPressLeft ?? handleGoToGoodHabits;
-
-  // Verwendet übergebene Rechte-Aktion oder den Platzhalter.
-  const handleRightButtonAction = onPressRight ?? handleRightButtonPress;
 
   return (
     <View style={[styles.headerContainer, insetStyles.headerInset]}>
@@ -108,7 +99,7 @@ export function ScreenHeader({
         {showRightButton ? (
           <Pressable
             style={styles.headerButton}
-            onPress={handleRightButtonAction}
+            onPress={onPressRight}
             accessibilityRole="button"
             accessibilityLabel={rightAccessibilityLabel}
           />
@@ -132,9 +123,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
+    top: 0,
     bottom: 0,
     width: '100%',
-    aspectRatio: WOOD_IMAGE_ASPECT_RATIO,
+    height: '100%',
   },
   headerContent: {
     height: HEADER_CONTENT_HEIGHT,

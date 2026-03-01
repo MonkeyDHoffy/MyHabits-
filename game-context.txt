@@ -1,0 +1,229 @@
+MY HABITS – GAME CONTEXT ÜBERSICHT
+
+Ziel dieser Datei
+- Diese Übersicht beschreibt alle relevanten Game-Daten und Objekte,
+  die die App aktuell verarbeitet.
+- Fokus: Datenmodell, Zustände, Beziehungen und Datenfluss.
+
+==================================================
+1) ZENTRALE DOMAIN-DATEN (KERNMODELL)
+==================================================
+
+1.1 HabitType
+- Typ: 'good' | 'bad'
+- Bedeutung:
+  - good = gute Gewohnheit (z. B. Lesen)
+  - bad = schlechte Gewohnheit (z. B. Rauchen)
+
+1.2 HabitItem
+- Struktur:
+  - id: string
+  - title: string
+  - targetPerWeek: number
+  - type: HabitType
+  - positiveStreak: number
+  - negativeStreak: number
+- Bedeutung:
+  - id: stabile Identifikation einer Gewohnheit
+  - title: Name der Gewohnheit
+  - targetPerWeek: Soll-Frequenz je Woche
+  - type: good/bad
+  - positiveStreak: positiver Zähler (je nach Regel je Typ anders genutzt)
+  - negativeStreak: negativer Zähler (je nach Regel je Typ anders genutzt)
+
+1.3 RunDailyProgress
+- Struktur:
+  - Record mit habitId als Key
+  - Wert je Habit:
+    - completedToday: boolean
+    - usedJokerToday: boolean
+- Bedeutung:
+  - completedToday: wurde diese Gewohnheit heute als erledigt markiert?
+  - usedJokerToday: wurde heute bei dieser Gewohnheit ein Joker verbraucht?
+
+1.4 RunState
+- Struktur:
+  - isActive: boolean
+  - startedAt: Date | null
+  - dayNumber: number
+  - weekDayNumber: number
+  - playerHP: number
+  - enemyHP: number
+  - weeklyJokers: Record<string, number>
+  - dailyProgress: RunDailyProgress
+- Bedeutung:
+  - isActive: läuft aktuell ein Run?
+  - startedAt: Startzeit des Runs
+  - dayNumber: Gesamt-Tag im aktuellen Run (1,2,3,...)
+  - weekDayNumber: Tag in der Run-Woche (1..7)
+  - playerHP: Lebenspunkte Spieler
+  - enemyHP: Lebenspunkte Gegner („Schweinehund“)
+  - weeklyJokers: verbleibende Joker pro Habit und Woche
+  - dailyProgress: Tagesstatus pro Habit
+
+1.5 GameContextValue
+- Struktur:
+  - habits: HabitItem[]
+  - run: RunState
+  - maxHP: number
+  - addHabit(...)
+  - startRun()
+  - advanceRunDayForDevelopment()
+  - endRun()
+  - resetRun()
+  - toggleHabitForToday(habitId)
+- Bedeutung:
+  - Das ist die öffentliche API des zentralen Game-Contexts.
+
+==================================================
+2) GLOBALE KONSTANTEN UND HILFSDATEN
+==================================================
+
+2.1 MAX_HP
+- Wert: 100
+- Nutzung:
+  - Startwert für playerHP und enemyHP
+  - Obergrenze beim Heilen (über clampHP)
+
+2.2 weeklyJokers (abgeleitet)
+- Wird aus habits berechnet:
+  - good: Joker = max(0, 7 - targetPerWeek)
+  - bad: Joker = max(0, targetPerWeek)
+- Wird pro Woche geführt und bei Wochenwechsel neu gesetzt.
+
+==================================================
+3) GAMEPLAY-AKTIONEN (STATE-ÜBERGÄNGE)
+==================================================
+
+3.1 addHabit(title, targetPerWeek, type)
+- Erzeugt ein neues HabitItem mit 0/0 Streaks.
+- Wenn Run aktiv ist:
+  - dailyProgress bekommt neuen Eintrag für dieses Habit.
+  - weeklyJokers bekommt Startwert für dieses Habit.
+
+3.2 startRun()
+- Setzt run.isActive = true.
+- Setzt HP auf MAX_HP.
+- Setzt dayNumber = 1, weekDayNumber = 1.
+- Erzeugt dailyProgress aus allen vorhandenen Habits.
+- Erzeugt weeklyJokers aus allen Habits.
+
+3.3 toggleHabitForToday(habitId)
+- Schaltet completedToday für genau ein Habit um.
+- Berechnet HP-Änderung abhängig von:
+  - Habit-Typ (good/bad)
+  - Toggle-Richtung (an/aus)
+  - Streak-Werten
+  - Joker-Nutzung bei bad-Habits
+- Aktualisiert Habit-Streaks für dieses Habit.
+- Aktualisiert Joker-Stand für dieses Habit (bei bad + Joker-Verbrauch/Rückgabe).
+- Wenn HP <= 0 bei Spieler oder Gegner:
+  - Run endet sofort.
+  - Alle Habit-Streaks werden auf 0 zurückgesetzt.
+  - Run wird auf inaktiv zurückgesetzt.
+
+3.4 advanceRunDayForDevelopment()
+- Schließt den Tag ab (manuell, Dev-Button).
+- Für nicht erledigte Habits:
+  - good: verbraucht zuerst Joker, sonst negativeStreak++, Gegner heilt
+  - bad: positiveStreak++, Spieler heilt
+- Erhöht dayNumber.
+- Erhöht weekDayNumber (7 -> 1).
+- Bei neuer Woche: weeklyJokers wird neu aus habits erzeugt.
+- dailyProgress wird für den neuen Tag zurückgesetzt.
+
+3.5 endRun()
+- Beendet den aktiven Run.
+- Setzt alle Habit-Streaks auf 0.
+- Setzt Run auf inaktiv (createInactiveRun).
+
+3.6 resetRun()
+- Wie endRun, aber als direkter Reset-Flow genutzt.
+- Setzt ebenfalls alle Habit-Streaks auf 0.
+
+==================================================
+4) WICHTIGE ZUSAMMENHÄNGE (SO HÄNGT ES ZUSAMMEN)
+==================================================
+
+4.1 habits <-> run.dailyProgress
+- dailyProgress referenziert Habits über habit.id.
+- Wenn Habits sich ändern (z. B. neues Habit), müssen dailyProgress und weeklyJokers
+  synchron erweitert werden, wenn ein Run aktiv ist.
+
+4.2 habits <-> run.weeklyJokers
+- Joker werden pro Habit geführt (Key = habit.id).
+- Joker-Menge hängt direkt von Habit-Typ und targetPerWeek ab.
+- Bei neuem Run oder neuer Woche werden Joker neu berechnet.
+
+4.3 habits (streaks) <-> HP-Logik
+- Streak-Werte beeinflussen direkt Schaden/Heilung.
+- Toggle-Aktion und Tagesabschluss lesen/schreiben Streaks.
+- Dadurch sind Streaks zentrale Multiplikatoren für Kampfdynamik.
+
+4.4 run.isActive als globaler Gatekeeper
+- Viele Aktionen sind nur aktiv, wenn run.isActive = true.
+- UI und Logik orientieren sich daran:
+  - Toggle im Drawer gesperrt, wenn kein Run aktiv
+  - Header zeigt Run-Daten nur bei aktivem Run
+
+4.5 Run-Ende <-> Counter-Reset
+- Bei Endbedingungen (manuell oder HP-basiert) werden Counter zurückgesetzt.
+- Ergebnis: Jeder neue Run startet ohne Altlasten in den Streaks.
+
+==================================================
+5) UI-OBJEKTE, DIE GAME-DATEN KONSUMIEREN
+==================================================
+
+5.1 Home Screen (app/(tabs)/index.tsx)
+- Liest aus Context:
+  - habits, run, maxHP
+  - startRun, endRun, resetRun, advanceRunDayForDevelopment, toggleHabitForToday
+- Übergibt Daten an:
+  - ScreenHeader (enemyHP, runDayNumber, run active)
+  - BottomDrawer (playerHP, habits, jokers, progress, callbacks)
+
+5.2 BottomDrawer (components/bottom-drawer.tsx)
+- Props (relevant):
+  - isRunActive, playerHP, maxHP
+  - habits, weeklyJokers, dailyProgress
+  - onStartRun, onEndRun, onEndDayForDevelopment, onToggleHabitForToday
+- Funktion:
+  - zeigt Habit-Liste inkl. Joker + Streak-Anzeige
+  - ruft zentrale Context-Aktionen über Callbacks auf
+
+5.3 ScreenHeader (components/screen-header.tsx)
+- Props (relevant):
+  - isRunActive, enemyHP, maxHP, runDayNumber
+- Funktion:
+  - zeigt Gegner-HP und aktuellen Run-Tag
+
+5.4 Good Habits Screen (app/good-habits.tsx)
+- Liest aus Context:
+  - habits, addHabit
+- Funktion:
+  - erstellt neue Habits
+  - zeigt vorhandene Habits inkl. Streak-Status
+
+==================================================
+6) AKTUELLER GAME-FLOW (KURZ)
+==================================================
+
+1. Nutzer legt Habits an (good-habits screen).
+2. Nutzer startet Run.
+3. Nutzer toggelt täglich Habits im Drawer.
+4. HP, Streaks und Joker werden in Echtzeit angepasst.
+5. Dev-Tagesabschluss verarbeitet verpasste Habits und startet nächsten Tag.
+6. Bei Sieg/Niederlage oder manuellem Ende:
+   - Run wird inaktiv,
+   - alle Streaks werden auf 0 gesetzt.
+
+==================================================
+7) OFFENE ARCHITEKTUR-HINWEISE
+==================================================
+
+- Tageswechsel ist aktuell manuell (Dev-Button), nicht kalenderbasiert.
+- Persistenz über App-Neustarts ist derzeit nicht implementiert.
+- HP-Neuberechnung aus Progress-Helfer existiert im Code, ist aktuell aber
+  nicht zentral im Hauptfluss verwendet.
+
+Ende der Übersicht.

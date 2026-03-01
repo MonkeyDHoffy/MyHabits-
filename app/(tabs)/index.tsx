@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Image, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Image, Platform, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 
 import { BottomDrawer } from '@/components/bottom-drawer';
 import { ScreenHeader } from '@/components/screen-header';
@@ -52,17 +53,16 @@ function getVerticalLetterboxInset(
 
 // Rendert die Startseite mit einem vollständig sichtbaren Hintergrundbild.
 export default function HomeScreen() {
+  const router = useRouter();
   const {
     habits,
     run,
     maxHP,
     startRun,
     advanceRunDayForDevelopment,
-    endRun,
-    resetRun,
     toggleHabitForToday,
   } = useGame();
-  const [backgroundState] = useState<BackgroundState>('bg4');
+  const backgroundState: BackgroundState = 'bg4';
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
@@ -82,28 +82,24 @@ export default function HomeScreen() {
     verticalLetterboxInset
   );
 
-  // Startet oder setzt den Run über den rechten Header-Button.
+  // Öffnet das Menü über den rechten Header-Button.
   function handleHeaderRightPress() {
-    if (run.isActive) {
-      resetRun();
-      return;
-    }
-
-    startRun();
+    router.push('/menu');
   }
 
+  // Aktualisiert die Viewport-Maße für korrekte Letterbox-Berechnung.
+  const handleViewportLayout = useCallback((event: LayoutChangeEvent) => {
+    setViewportWidth(event.nativeEvent.layout.width);
+    setViewportHeight(event.nativeEvent.layout.height);
+  }, []);
+
   return (
-    <View
-      style={styles.viewport}
-      onLayout={(event) => {
-        setViewportWidth(event.nativeEvent.layout.width);
-        setViewportHeight(event.nativeEvent.layout.height);
-      }}>
+    <View style={styles.viewport} onLayout={handleViewportLayout}>
       <Image source={imageSource} style={styles.image} resizeMode="contain" />
       <ScreenHeader
         minimumHeight={headerMinimumHeight}
         onPressRight={handleHeaderRightPress}
-        rightAccessibilityLabel={run.isActive ? 'Run zurücksetzen' : 'Run starten'}
+        rightAccessibilityLabel="Menü öffnen"
         isRunActive={run.isActive}
         enemyHP={run.enemyHP}
         maxHP={maxHP}
@@ -122,7 +118,6 @@ export default function HomeScreen() {
         weeklyJokers={run.weeklyJokers}
         dailyProgress={run.dailyProgress}
         onStartRun={startRun}
-        onEndRun={endRun}
         onEndDayForDevelopment={advanceRunDayForDevelopment}
         onToggleHabitForToday={toggleHabitForToday}
       />

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
-    Animated,
-    ImageBackground,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    View,
-    useWindowDimensions,
+  Animated,
+  ImageBackground,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
 } from 'react-native';
 
 import { HPBar } from '@/components/hp-bar';
@@ -31,7 +31,6 @@ type BottomDrawerProps = {
   weeklyJokers: Record<string, number>;
   dailyProgress: RunDailyProgress;
   onStartRun: () => void;
-  onEndRun: () => void;
   onEndDayForDevelopment: () => void;
   onToggleHabitForToday: (habitId: string) => void;
 };
@@ -121,11 +120,6 @@ function getHabitTypeLabel(type: HabitItem['type']): string {
   return type === 'good' ? 'gut' : 'schlecht';
 }
 
-// Liefert die passende Beschriftung für den Start-Button.
-function getStartRunButtonLabel(isRunActive: boolean): string {
-  return isRunActive ? 'Run beenden' : 'Run starten';
-}
-
 // Rendert eine Zeile für eine Gewohnheit mit Toggle und Streak-Werten.
 function HabitRow({
   habit,
@@ -136,12 +130,15 @@ function HabitRow({
 }: HabitRowProps) {
   const isCompleted = isHabitCompletedToday(dailyProgress, habit.id);
   const jokerCount = weeklyJokers[habit.id] ?? 0;
+  const handleToggleHabit = useCallback(() => {
+    onToggleHabitForToday(habit.id);
+  }, [habit.id, onToggleHabitForToday]);
 
   return (
     <View style={styles.habitRow}>
       <Pressable
         style={styles.habitMain}
-        onPress={() => onToggleHabitForToday(habit.id)}
+        onPress={handleToggleHabit}
         disabled={!isRunActive}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: isCompleted }}
@@ -184,7 +181,6 @@ export function BottomDrawer({
   weeklyJokers,
   dailyProgress,
   onStartRun,
-  onEndRun,
   onEndDayForDevelopment,
   onToggleHabitForToday,
 }: BottomDrawerProps) {
@@ -194,15 +190,27 @@ export function BottomDrawer({
   const animatedHeight = useAnimatedDrawerHeight(isOpen, openHeight, closedHeight);
   const handleToggleDrawer = useToggleDrawer(isOpen, onChangeOpen);
 
-  // Startet oder beendet den Run über denselben Button.
-  function handleRunButtonPress() {
-    if (isRunActive) {
-      onEndRun();
-      return;
-    }
-
+  // Startet einen neuen Run aus dem Drawer.
+  function handleStartRunPress() {
     onStartRun();
   }
+
+  // Rendert eine einzelne Habit-Zeile in der Scroll-Liste.
+  const renderHabitRow = useCallback(
+    (habit: HabitItem) => {
+      return (
+        <HabitRow
+          key={habit.id}
+          habit={habit}
+          weeklyJokers={weeklyJokers}
+          dailyProgress={dailyProgress}
+          isRunActive={isRunActive}
+          onToggleHabitForToday={onToggleHabitForToday}
+        />
+      );
+    },
+    [dailyProgress, isRunActive, onToggleHabitForToday, weeklyJokers]
+  );
 
   return (
     <Animated.View style={[styles.container, { height: animatedHeight }]}>
@@ -220,22 +228,17 @@ export function BottomDrawer({
 
           {isOpen ? (
             <View style={styles.expandedContent}>
-              <Pressable
-                style={[
-                  styles.startRunButton,
-                  isRunActive ? styles.startRunButtonEnd : styles.startRunButtonStart,
-                ]}
-                onPress={handleRunButtonPress}
-                accessibilityRole="button"
-                accessibilityLabel={isRunActive ? 'Run beenden' : 'Run starten'}>
-                <ThemedText
-                  style={[
-                    styles.startRunText,
-                    isRunActive ? styles.startRunTextEnd : styles.startRunTextStart,
-                  ]}>
-                  {getStartRunButtonLabel(isRunActive)}
-                </ThemedText>
-              </Pressable>
+              {!isRunActive ? (
+                <Pressable
+                  style={[styles.startRunButton, styles.startRunButtonStart]}
+                  onPress={handleStartRunPress}
+                  accessibilityRole="button"
+                  accessibilityLabel="Run starten">
+                  <ThemedText style={[styles.startRunText, styles.startRunTextStart]}>
+                    Run starten
+                  </ThemedText>
+                </Pressable>
+              ) : null}
 
               {isRunActive ? (
                 <Pressable
@@ -248,16 +251,7 @@ export function BottomDrawer({
               ) : null}
 
               <ScrollView style={styles.habitList} contentContainerStyle={styles.habitListContent}>
-                {habits.map((habit) => (
-                  <HabitRow
-                    key={habit.id}
-                    habit={habit}
-                    weeklyJokers={weeklyJokers}
-                    dailyProgress={dailyProgress}
-                    isRunActive={isRunActive}
-                    onToggleHabitForToday={onToggleHabitForToday}
-                  />
-                ))}
+                {habits.map(renderHabitRow)}
 
                 {habits.length === 0 ? (
                   <ThemedText style={styles.emptyText} lightColor="#FFFFFF" darkColor="#FFFFFF">
@@ -319,17 +313,11 @@ const styles = StyleSheet.create({
   startRunButtonStart: {
     backgroundColor: '#FFFFFF',
   },
-  startRunButtonEnd: {
-    backgroundColor: '#FF6B6B',
-  },
   startRunText: {
     fontWeight: '700',
   },
   startRunTextStart: {
     color: '#1E3B2F',
-  },
-  startRunTextEnd: {
-    color: '#FFFFFF',
   },
   endDayButton: {
     height: 40,

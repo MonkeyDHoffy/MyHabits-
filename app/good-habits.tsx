@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
@@ -29,6 +29,7 @@ type HabitTypeButtonProps = {
 
 type HabitCardProps = {
   item: HabitItem;
+  onDeleteHabit: (habitId: string) => void;
 };
 
 // Rendert einen auswählbaren Button für die Wochenfrequenz.
@@ -62,8 +63,13 @@ function HabitTypeButton({ label, isSelected, onPress }: HabitTypeButtonProps) {
 }
 
 // Rendert eine einzelne Gewohnheit in der Liste.
-function HabitCard({ item }: HabitCardProps) {
+function HabitCard({ item, onDeleteHabit }: HabitCardProps) {
   const typeLabel = item.type === 'good' ? 'gut' : 'schlecht';
+
+  // Löscht den aktuellen Habit-Eintrag.
+  const handleDeleteHabit = useCallback(() => {
+    onDeleteHabit(item.id);
+  }, [item.id, onDeleteHabit]);
 
   return (
     <View style={styles.habitCard}>
@@ -76,6 +82,14 @@ function HabitCard({ item }: HabitCardProps) {
       <ThemedText style={styles.habitMeta} lightColor="#EDEDED" darkColor="#EDEDED">
         {`Positiv: ${item.positiveStreak} · Negativ: ${item.negativeStreak}`}
       </ThemedText>
+
+      <Pressable
+        style={styles.deleteButton}
+        onPress={handleDeleteHabit}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.title} löschen`}>
+        <ThemedText style={styles.deleteButtonText}>Löschen</ThemedText>
+      </Pressable>
     </View>
   );
 }
@@ -103,7 +117,7 @@ function getTrimmedTitle(value: string): string {
 // Rendert eine Platzhalter-Seite für gute Gewohnheiten und Vorsätze.
 export default function GoodHabitsScreen() {
   const router = useRouter();
-  const { habits, addHabit } = useGame();
+  const { habits, run, addHabit, deleteHabit, endRun } = useGame();
   const [titleInput, setTitleInput] = useState('');
   const [weeklyCount, setWeeklyCount] = useState<number>(3);
   const [habitType, setHabitType] = useState<HabitFormType>('gut');
@@ -131,10 +145,37 @@ export default function GoodHabitsScreen() {
   // Liefert den stabilen Schlüssel für jeden Listen-Eintrag.
   const getHabitKey = useCallback((item: HabitItem) => item.id, []);
 
+  // Löscht ein Habit sicher und beendet bei Bedarf vorher den aktiven Run.
+  const handleDeleteHabit = useCallback((habitId: string) => {
+    if (!run.isActive) {
+      deleteHabit(habitId);
+      return;
+    }
+
+    Alert.alert(
+      'Aktiver Run',
+      'Wenn du diese Gewohnheit löschst, wird der aktive Run beendet. Möchtest du fortfahren?',
+      [
+        {
+          text: 'Abbrechen',
+          style: 'cancel',
+        },
+        {
+          text: 'Run beenden & löschen',
+          style: 'destructive',
+          onPress: () => {
+            endRun();
+            deleteHabit(habitId);
+          },
+        },
+      ]
+    );
+  }, [deleteHabit, endRun, run.isActive]);
+
   // Rendert einen Listeneintrag für FlatList.
   const renderHabitItem = useCallback(({ item }: { item: HabitItem }) => {
-    return <HabitCard item={item} />;
-  }, []);
+    return <HabitCard item={item} onDeleteHabit={handleDeleteHabit} />;
+  }, [handleDeleteHabit]);
 
   // Wechselt den Habit-Typ und korrigiert ungültige Wochenwerte.
   const handleChangeHabitType = useCallback((nextType: HabitFormType) => {
@@ -364,6 +405,21 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 14,
     lineHeight: 20,
+  },
+  deleteButton: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  deleteButtonText: {
+    color: '#19352A',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
   },
   emptyState: {
     paddingVertical: 10,

@@ -1,8 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { Infobox, type InfoboxAction } from '@/components/infobox';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { useGame, type HabitItem } from '@/context/game-context';
@@ -121,7 +122,9 @@ export default function GoodHabitsScreen() {
   const [titleInput, setTitleInput] = useState('');
   const [weeklyCount, setWeeklyCount] = useState<number>(3);
   const [habitType, setHabitType] = useState<HabitFormType>('gut');
+  const [pendingDeleteHabitId, setPendingDeleteHabitId] = useState<string | null>(null);
   const weekOptions = getWeekOptionsByType(habitType);
+  const isDeleteInfoboxVisible = pendingDeleteHabitId !== null;
 
   // Führt zur vorherigen Seite zurück.
   const handleGoBack = useCallback(() => {
@@ -145,6 +148,37 @@ export default function GoodHabitsScreen() {
   // Liefert den stabilen Schlüssel für jeden Listen-Eintrag.
   const getHabitKey = useCallback((item: HabitItem) => item.id, []);
 
+  // Schließt die Lösch-Infobox ohne Aktion.
+  const handleCloseDeleteInfobox = useCallback(() => {
+    setPendingDeleteHabitId(null);
+  }, []);
+
+  // Bestätigt das Löschen im aktiven Run und führt die Aktion aus.
+  const handleConfirmDeleteInRun = useCallback(() => {
+    if (!pendingDeleteHabitId) {
+      return;
+    }
+
+    endRun();
+    deleteHabit(pendingDeleteHabitId);
+    setPendingDeleteHabitId(null);
+  }, [deleteHabit, endRun, pendingDeleteHabitId]);
+
+  // Liefert die Aktionen für die wiederverwendbare Delete-Infobox.
+  const deleteInfoboxActions = useMemo<InfoboxAction[]>(() => {
+    return [
+      {
+        label: 'Abbrechen',
+        variant: 'secondary',
+        onPress: handleCloseDeleteInfobox,
+      },
+      {
+        label: 'Run beenden',
+        onPress: handleConfirmDeleteInRun,
+      },
+    ];
+  }, [handleCloseDeleteInfobox, handleConfirmDeleteInRun]);
+
   // Löscht ein Habit sicher und beendet bei Bedarf vorher den aktiven Run.
   const handleDeleteHabit = useCallback((habitId: string) => {
     if (!run.isActive) {
@@ -152,25 +186,8 @@ export default function GoodHabitsScreen() {
       return;
     }
 
-    Alert.alert(
-      'Aktiver Run',
-      'Wenn du diese Gewohnheit löschst, wird der aktive Run beendet. Möchtest du fortfahren?',
-      [
-        {
-          text: 'Abbrechen',
-          style: 'cancel',
-        },
-        {
-          text: 'Run beenden & löschen',
-          style: 'destructive',
-          onPress: () => {
-            endRun();
-            deleteHabit(habitId);
-          },
-        },
-      ]
-    );
-  }, [deleteHabit, endRun, run.isActive]);
+    setPendingDeleteHabitId(habitId);
+  }, [deleteHabit, run.isActive]);
 
   // Rendert einen Listeneintrag für FlatList.
   const renderHabitItem = useCallback(({ item }: { item: HabitItem }) => {
@@ -209,7 +226,7 @@ export default function GoodHabitsScreen() {
         ListHeaderComponent={
           <View style={styles.formCard}>
             <ThemedText type="title" lightColor="#FFFFFF" darkColor="#FFFFFF">
-              Gute Gewohnheiten
+              Gewohnheit
             </ThemedText>
 
             <ThemedText style={styles.fieldLabel} lightColor="#FFFFFF" darkColor="#FFFFFF">
@@ -273,6 +290,14 @@ export default function GoodHabitsScreen() {
             </ThemedText>
           </View>
         }
+      />
+
+      <Infobox
+        visible={isDeleteInfoboxVisible}
+        title="Achtung!"
+        message="Wenn du diese Gewohnheit löschst, wird der aktive Run beendet. Möchtest du fortfahren?"
+        actions={deleteInfoboxActions}
+        onRequestClose={handleCloseDeleteInfobox}
       />
     </LinearGradient>
   );

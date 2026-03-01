@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { Image, Platform, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 
 import { BottomDrawer } from '@/components/bottom-drawer';
+import { PigCanvasBox } from '@/components/pig-canvas-box';
 import { ScreenHeader } from '@/components/screen-header';
 import { useGame } from '@/context/game-context';
 
@@ -20,6 +21,29 @@ const BACKGROUND_ASPECT_RATIO = 1024 / 1536;
 // Liefert das passende Bild auf Basis des aktuellen Hintergrund-Status.
 function getBackgroundImage(backgroundState: BackgroundState): number {
   return backgroundImages[backgroundState];
+}
+
+// Liefert den Hintergrund-Zustand passend zur aktuellen Gegner-HP.
+function getBackgroundStateByEnemyHP(enemyHP: number, maxHP: number): BackgroundState {
+  if (maxHP <= 0) {
+    return 'bg4';
+  }
+
+  const hpPercent = (enemyHP / maxHP) * 100;
+
+  if (hpPercent > 75) {
+    return 'bg4';
+  }
+
+  if (hpPercent > 50) {
+    return 'bg3';
+  }
+
+  if (hpPercent >= 25) {
+    return 'bg2';
+  }
+
+  return 'bg1';
 }
 
 // Berechnet eine stabile Drawer-Höhe mit Mobile-Fokus.
@@ -62,7 +86,7 @@ export default function HomeScreen() {
     advanceRunDayForDevelopment,
     toggleHabitForToday,
   } = useGame();
-  const backgroundState: BackgroundState = 'bg4';
+  const backgroundState = getBackgroundStateByEnemyHP(run.enemyHP, maxHP);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
@@ -104,6 +128,10 @@ export default function HomeScreen() {
         enemyHP={run.enemyHP}
         maxHP={maxHP}
         runDayNumber={run.dayNumber}
+      />
+      <PigCanvasBox
+        headerMinimumHeight={headerMinimumHeight}
+        drawerClosedHeight={closedDrawerHeight}
       />
       <BottomDrawer
         isOpen={isDrawerOpen}

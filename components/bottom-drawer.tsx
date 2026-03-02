@@ -27,7 +27,7 @@ type BottomDrawerProps = {
   containerHeight?: number;
   isRunActive: boolean;
   isDevMode: boolean;
-  playerHP: number;
+  enemyHP: number;
   maxHP: number;
   habits: HabitItem[];
   weeklyJokers: Record<string, number>;
@@ -171,7 +171,7 @@ export function BottomDrawer({
   containerHeight,
   isRunActive,
   isDevMode,
-  playerHP,
+  enemyHP,
   maxHP,
   habits,
   weeklyJokers,
@@ -188,8 +188,10 @@ export function BottomDrawer({
   const handleToggleDrawer = useToggleDrawer(isOpen, onChangeOpen);
   const createHabitPulseScale = useRef(new Animated.Value(1)).current;
   const startRunPulseScale = useRef(new Animated.Value(1)).current;
+  const drawerHandlePulseScale = useRef(new Animated.Value(1)).current;
   const shouldPulseCreateHabitButton = isOpen && habits.length === 0;
   const shouldPulseStartRunButton = isOpen && !isRunActive && habits.length > 0;
+  const shouldPulseDrawerHandle = !isOpen;
 
   // Lässt den Gewohnheiten-Button sanft pulsieren, solange keine Habits existieren.
   useEffect(() => {
@@ -255,6 +257,38 @@ export function BottomDrawer({
     };
   }, [shouldPulseStartRunButton, startRunPulseScale]);
 
+  // Lässt den Pyramid-Handle pulsieren, solange der Drawer geschlossen ist.
+  useEffect(() => {
+    if (!shouldPulseDrawerHandle) {
+      drawerHandlePulseScale.stopAnimation();
+      drawerHandlePulseScale.setValue(1);
+      return;
+    }
+
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(drawerHandlePulseScale, {
+          toValue: 1.1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(drawerHandlePulseScale, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    pulseLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+      drawerHandlePulseScale.stopAnimation();
+      drawerHandlePulseScale.setValue(1);
+    };
+  }, [drawerHandlePulseScale, shouldPulseDrawerHandle]);
+
   // Startet einen neuen Run aus dem Drawer.
   function handleStartRunPress() {
     onStartRun();
@@ -280,18 +314,34 @@ export function BottomDrawer({
   return (
     <Animated.View style={[styles.container, { height: animatedHeight }]}>
       <View style={styles.playerHPFloating} pointerEvents="none">
-        <HPBar label="Spieler" current={playerHP} max={maxHP} fillColor="#57E389" variant="player" />
+        <HPBar
+          label="Schweinehund"
+          current={enemyHP}
+          max={maxHP}
+          fillColor="#FF6B6B"
+          variant="enemy"
+          showValue={isRunActive}
+        />
       </View>
+
+      <Pressable style={styles.toggleArea} onPress={handleToggleDrawer} accessibilityRole="button">
+        <Animated.View
+          style={{
+            transform: [{ scale: drawerHandlePulseScale }, { rotate: isOpen ? '180deg' : '0deg' }],
+          }}>
+          <Image
+            source={require('@/assets/images/buttons/pyramid.png')}
+            style={styles.togglePyramid}
+            resizeMode="contain"
+          />
+        </Animated.View>
+      </Pressable>
 
       <ImageBackground
         source={require('@/assets/background/wood.png')}
         style={styles.background}
         imageStyle={styles.backgroundImage}
         resizeMode="cover">
-        <Pressable style={styles.toggleArea} onPress={handleToggleDrawer} accessibilityRole="button">
-          <View style={styles.toggleIndicator} />
-        </Pressable>
-
         <View style={styles.contentArea}>
           {isOpen ? (
             <View style={styles.expandedContent}>
@@ -331,10 +381,6 @@ export function BottomDrawer({
 
                 {habits.length === 0 ? (
                   <View style={styles.emptyStateArea}>
-                    <ThemedText style={styles.emptyText} lightColor="#FFFFFF" darkColor="#FFFFFF">
-                      Lege zuerst Gewohnheiten an.
-                    </ThemedText>
-
                     <Animated.View
                       style={[
                         styles.createHabitPulseWrapper,
@@ -390,20 +436,24 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   toggleArea: {
-    height: 30,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 40,
+    elevation: 40,
   },
-  toggleIndicator: {
-    width: 48,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.75)',
+  togglePyramid: {
+    width: 104,
+    height: 40,
   },
   contentArea: {
     flex: 1,
     paddingHorizontal: 36,
-    paddingTop: 14,
+    paddingTop: 44,
     paddingBottom: 10,
   },
   expandedContent: {
@@ -505,12 +555,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-  },
-  emptyText: {
-    marginTop: 12,
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
   },
   emptyStateArea: {
     alignItems: 'center',

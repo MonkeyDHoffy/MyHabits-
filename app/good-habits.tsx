@@ -118,7 +118,7 @@ function getTrimmedTitle(value: string): string {
 // Rendert eine Platzhalter-Seite für gute Gewohnheiten und Vorsätze.
 export default function GoodHabitsScreen() {
   const router = useRouter();
-  const { habits, run, addHabit, deleteHabit, endRun } = useGame();
+  const { habits, run, maxHP, addHabit, deleteHabit, endRun } = useGame();
   const [titleInput, setTitleInput] = useState('');
   const [weeklyCount, setWeeklyCount] = useState<number>(3);
   const [habitType, setHabitType] = useState<HabitFormType>('gut');
@@ -214,6 +214,9 @@ export default function GoodHabitsScreen() {
         leftAccessibilityLabel="Zurück"
         showRightButton={false}
         useLeftBackImage
+        isRunActive={run.isActive}
+        playerHP={run.playerHP}
+        maxHP={maxHP}
       />
 
       <FlatList

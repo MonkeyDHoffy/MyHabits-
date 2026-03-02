@@ -171,6 +171,7 @@ export default function HomeScreen() {
         rightAccessibilityLabel="Menü öffnen"
         useRightGearImage
         isRunActive={run.isActive}
+        playerHP={run.playerHP}
         enemyHP={run.enemyHP}
         maxHP={maxHP}
         runDayNumber={run.dayNumber}
@@ -188,7 +189,7 @@ export default function HomeScreen() {
         containerHeight={effectiveHeight}
         isRunActive={run.isActive}
         isDevMode={isDevMode}
-        playerHP={run.playerHP}
+        enemyHP={run.enemyHP}
         maxHP={maxHP}
         habits={habits}
         weeklyJokers={run.weeklyJokers}

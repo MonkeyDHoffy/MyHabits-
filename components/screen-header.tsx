@@ -20,6 +20,7 @@ type ScreenHeaderProps = {
   useRightGearImage?: boolean;
   minimumHeight?: number;
   isRunActive?: boolean;
+  playerHP?: number;
   enemyHP?: number;
   maxHP?: number;
   runDayNumber?: number;
@@ -38,6 +39,7 @@ export function ScreenHeader({
   useRightGearImage = false,
   minimumHeight = 0,
   isRunActive = false,
+  playerHP = 0,
   enemyHP = 0,
   maxHP = 100,
   runDayNumber = 0,
@@ -156,17 +158,16 @@ export function ScreenHeader({
         </View>
       </View>
 
-      {isRunActive ? (
-        <View style={[styles.enemyHPBarArea, { top: headerHeight }]}>
-          <HPBar
-            label="Schweinehund"
-            current={enemyHP}
-            max={maxHP}
-            fillColor="#FF6B6B"
-            variant="enemy"
-          />
-        </View>
-      ) : null}
+      <View style={[styles.enemyHPBarArea, { top: headerHeight }]}>
+        <HPBar
+          label="Spieler"
+          current={playerHP}
+          max={maxHP}
+          fillColor="#57E389"
+          variant="player"
+          showValue={isRunActive}
+        />
+      </View>
     </>
   );
 }

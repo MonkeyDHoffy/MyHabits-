@@ -14,7 +14,7 @@ const MENU_GRADIENT_END = { x: 1, y: 1 } as const;
 // Rendert die Menü-Seite mit zentralen Unterpunkten.
 export default function MenuScreen() {
   const router = useRouter();
-  const { run, startRun, endRun, isDevMode, toggleDevMode } = useGame();
+  const { run, maxHP, startRun, endRun, isDevMode, toggleDevMode } = useGame();
 
   // Führt zur vorherigen Seite zurück.
   const handleGoBack = useCallback(() => {
@@ -69,6 +69,9 @@ export default function MenuScreen() {
         leftAccessibilityLabel="Zurück"
         showRightButton={false}
         useLeftBackImage
+        isRunActive={run.isActive}
+        playerHP={run.playerHP}
+        maxHP={maxHP}
       />
 
       <View style={styles.contentArea}>

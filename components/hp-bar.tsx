@@ -13,6 +13,7 @@ type HPBarProps = {
   max: number;
   fillColor: string;
   variant?: 'default' | 'player' | 'enemy';
+  showValue?: boolean;
 };
 
 // Klemmt einen Wert sicher zwischen 0 und max.
@@ -40,7 +41,7 @@ function createDynamicStyles(fillPercent: number, fillColor: string) {
 }
 
 // Rendert einen kompakten HP-Balken mit Label und Zahlenwert.
-export function HPBar({ label, current, max, fillColor, variant = 'default' }: HPBarProps) {
+export function HPBar({ label, current, max, fillColor, variant = 'default', showValue = true }: HPBarProps) {
   const fillPercent = getFillPercent(current, max);
   const dynamicStyles = useMemo(() => {
     return createDynamicStyles(fillPercent, fillColor);
@@ -99,9 +100,11 @@ export function HPBar({ label, current, max, fillColor, variant = 'default' }: H
             </Animated.View>
           </View>
 
-          <ThemedText style={styles.playerValue} lightColor="#E8CF74" darkColor="#E8CF74">
-            {`${Math.round(clampValue(current, max))}/${max}`}
-          </ThemedText>
+          {showValue ? (
+            <ThemedText style={styles.playerValue} lightColor="#E8CF74" darkColor="#E8CF74">
+              {`${Math.round(clampValue(current, max))}/${max}`}
+            </ThemedText>
+          ) : null}
         </View>
       </View>
     );
@@ -113,9 +116,11 @@ export function HPBar({ label, current, max, fillColor, variant = 'default' }: H
         <ThemedText style={styles.label} lightColor="#FFFFFF" darkColor="#FFFFFF">
           {label}
         </ThemedText>
-        <ThemedText style={styles.value} lightColor="#FFFFFF" darkColor="#FFFFFF">
-          {`${Math.round(clampValue(current, max))}/${max}`}
-        </ThemedText>
+        {showValue ? (
+          <ThemedText style={styles.value} lightColor="#FFFFFF" darkColor="#FFFFFF">
+            {`${Math.round(clampValue(current, max))}/${max}`}
+          </ThemedText>
+        ) : null}
       </View>
 
       <View style={styles.track}>

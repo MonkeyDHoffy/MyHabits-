@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 
 export type DamageEvent = {
@@ -7,7 +7,7 @@ export type DamageEvent = {
 };
 
 type FloatingDamage = {
-  id: number;
+  instanceId: number;
   amount: number;
   left: number;
   top: number;
@@ -46,6 +46,7 @@ function getRandomTopAboveMidline(canvasHeight: number): number {
 // Rendert schwebende Damage-Zahlen für Treffer am Gegner.
 export function DamageEffects({ canvasWidth, canvasHeight, damageEvent }: DamageEffectsProps) {
   const [floatingDamages, setFloatingDamages] = useState<FloatingDamage[]>([]);
+  const floatingInstanceIdRef = useRef(0);
 
   useEffect(() => {
     if (!damageEvent) {
@@ -56,8 +57,10 @@ export function DamageEffects({ canvasWidth, canvasHeight, damageEvent }: Damage
       return;
     }
 
+    floatingInstanceIdRef.current += 1;
+
     const nextFloatingDamage: FloatingDamage = {
-      id: damageEvent.id,
+      instanceId: floatingInstanceIdRef.current,
       amount: damageEvent.amount,
       left: getRandomLeft(canvasWidth),
       top: getRandomTopAboveMidline(canvasHeight),
@@ -82,7 +85,7 @@ export function DamageEffects({ canvasWidth, canvasHeight, damageEvent }: Damage
       }),
     ]).start(() => {
       setFloatingDamages((currentItems) => {
-        return currentItems.filter((item) => item.id !== nextFloatingDamage.id);
+        return currentItems.filter((item) => item.instanceId !== nextFloatingDamage.instanceId);
       });
     });
   }, [canvasHeight, canvasWidth, damageEvent]);
@@ -91,7 +94,7 @@ export function DamageEffects({ canvasWidth, canvasHeight, damageEvent }: Damage
     <>
       {floatingDamages.map((item) => (
         <Animated.View
-          key={item.id}
+          key={item.instanceId}
           style={[
             styles.damageTag,
             {

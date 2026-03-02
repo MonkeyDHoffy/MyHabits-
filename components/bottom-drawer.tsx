@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
+  Image,
   ImageBackground,
   Pressable,
   ScrollView,
@@ -32,6 +33,7 @@ type BottomDrawerProps = {
   weeklyJokers: Record<string, number>;
   dailyProgress: RunDailyProgress;
   onStartRun: () => void;
+  onOpenGoodHabits: () => void;
   onEndDayForDevelopment: () => void;
   onToggleHabitForToday: (habitId: string) => void;
 };
@@ -116,11 +118,6 @@ function isHabitCompletedToday(progress: RunDailyProgress, habitId: string): boo
   return progress[habitId]?.completedToday ?? false;
 }
 
-// Liefert den Lesetext für den Habit-Typ.
-function getHabitTypeLabel(type: HabitItem['type']): string {
-  return type === 'good' ? 'gut' : 'schlecht';
-}
-
 // Rendert eine Zeile für eine Gewohnheit mit Toggle und Streak-Werten.
 function HabitRow({
   habit,
@@ -149,19 +146,16 @@ function HabitRow({
         </View>
 
         <View style={styles.habitTextArea}>
-          <ThemedText style={styles.habitTitle} lightColor="#FFFFFF" darkColor="#FFFFFF">
+          <ThemedText style={styles.habitTitle} lightColor="#F6F9EF" darkColor="#F6F9EF">
             {habit.title}
           </ThemedText>
-          <ThemedText style={styles.habitMeta} lightColor="#ECECEC" darkColor="#ECECEC">
-            {`${habit.targetPerWeek}x/Woche · ${getHabitTypeLabel(habit.type)}`}
-          </ThemedText>
-          <ThemedText style={styles.habitMeta} lightColor="#E8E8E8" darkColor="#E8E8E8">
+          <ThemedText style={styles.habitMeta} lightColor="#E8CF74" darkColor="#E8CF74">
             {`Joker: ${jokerCount}`}
           </ThemedText>
         </View>
       </Pressable>
 
-      <ThemedText style={styles.streakText} lightColor="#F0F0F0" darkColor="#F0F0F0">
+      <ThemedText style={styles.streakText} lightColor="#DDE9C9" darkColor="#DDE9C9">
         {`+${habit.positiveStreak} / -${habit.negativeStreak}`}
       </ThemedText>
     </View>
@@ -183,6 +177,7 @@ export function BottomDrawer({
   weeklyJokers,
   dailyProgress,
   onStartRun,
+  onOpenGoodHabits,
   onEndDayForDevelopment,
   onToggleHabitForToday,
 }: BottomDrawerProps) {
@@ -191,6 +186,74 @@ export function BottomDrawer({
   const openHeight = useDrawerOpenHeight(maxOpenHeight, referenceHeight);
   const animatedHeight = useAnimatedDrawerHeight(isOpen, openHeight, closedHeight);
   const handleToggleDrawer = useToggleDrawer(isOpen, onChangeOpen);
+  const createHabitPulseScale = useRef(new Animated.Value(1)).current;
+  const startRunPulseScale = useRef(new Animated.Value(1)).current;
+  const shouldPulseCreateHabitButton = isOpen && habits.length === 0;
+  const shouldPulseStartRunButton = isOpen && !isRunActive && habits.length > 0;
+
+  // Lässt den Gewohnheiten-Button sanft pulsieren, solange keine Habits existieren.
+  useEffect(() => {
+    if (!shouldPulseCreateHabitButton) {
+      createHabitPulseScale.stopAnimation();
+      createHabitPulseScale.setValue(1);
+      return;
+    }
+
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(createHabitPulseScale, {
+          toValue: 1.12,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(createHabitPulseScale, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    pulseLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+      createHabitPulseScale.stopAnimation();
+      createHabitPulseScale.setValue(1);
+    };
+  }, [createHabitPulseScale, shouldPulseCreateHabitButton]);
+
+  // Lässt den Start-Button sanft pulsieren, solange ein Run gestartet werden kann.
+  useEffect(() => {
+    if (!shouldPulseStartRunButton) {
+      startRunPulseScale.stopAnimation();
+      startRunPulseScale.setValue(1);
+      return;
+    }
+
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(startRunPulseScale, {
+          toValue: 1.1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(startRunPulseScale, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    pulseLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+      startRunPulseScale.stopAnimation();
+      startRunPulseScale.setValue(1);
+    };
+  }, [shouldPulseStartRunButton, startRunPulseScale]);
 
   // Startet einen neuen Run aus dem Drawer.
   function handleStartRunPress() {
@@ -216,6 +279,10 @@ export function BottomDrawer({
 
   return (
     <Animated.View style={[styles.container, { height: animatedHeight }]}>
+      <View style={styles.playerHPFloating} pointerEvents="none">
+        <HPBar label="Spieler" current={playerHP} max={maxHP} fillColor="#57E389" variant="player" />
+      </View>
+
       <ImageBackground
         source={require('@/assets/background/wood.png')}
         style={styles.background}
@@ -226,20 +293,27 @@ export function BottomDrawer({
         </Pressable>
 
         <View style={styles.contentArea}>
-          <HPBar label="Spieler" current={playerHP} max={maxHP} fillColor="#57E389" />
-
           {isOpen ? (
             <View style={styles.expandedContent}>
-              {!isRunActive ? (
-                <Pressable
-                  style={[styles.startRunButton, styles.startRunButtonStart]}
-                  onPress={handleStartRunPress}
-                  accessibilityRole="button"
-                  accessibilityLabel="Run starten">
-                  <ThemedText style={[styles.startRunText, styles.startRunTextStart]}>
-                    Run starten
-                  </ThemedText>
-                </Pressable>
+              {!isRunActive && habits.length > 0 ? (
+                <Animated.View
+                  style={[
+                    styles.startRunPulseWrapper,
+                    { transform: [{ scale: startRunPulseScale }] },
+                  ]}
+                >
+                  <Pressable
+                    style={styles.startRunImageButton}
+                    onPress={handleStartRunPress}
+                    accessibilityRole="button"
+                    accessibilityLabel="Run starten">
+                    <Image
+                      source={require('@/assets/images/buttons/start.png')}
+                      style={styles.startRunImage}
+                      resizeMode="contain"
+                    />
+                  </Pressable>
+                </Animated.View>
               ) : null}
 
               {isRunActive && isDevMode ? (
@@ -256,9 +330,31 @@ export function BottomDrawer({
                 {habits.map(renderHabitRow)}
 
                 {habits.length === 0 ? (
-                  <ThemedText style={styles.emptyText} lightColor="#FFFFFF" darkColor="#FFFFFF">
-                    Lege zuerst Gewohnheiten an.
-                  </ThemedText>
+                  <View style={styles.emptyStateArea}>
+                    <ThemedText style={styles.emptyText} lightColor="#FFFFFF" darkColor="#FFFFFF">
+                      Lege zuerst Gewohnheiten an.
+                    </ThemedText>
+
+                    <Animated.View
+                      style={[
+                        styles.createHabitPulseWrapper,
+                        { transform: [{ scale: createHabitPulseScale }] },
+                      ]}
+                    >
+                      <Pressable
+                        style={styles.createHabitImageButton}
+                        onPress={onOpenGoodHabits}
+                        accessibilityRole="button"
+                        accessibilityLabel="Gewohnheiten erstellen"
+                      >
+                        <Image
+                          source={require('@/assets/images/buttons/0d6c27d6-40e7-4ad5-9111-906ea77465fa.png')}
+                          style={styles.createHabitImage}
+                          resizeMode="contain"
+                        />
+                      </Pressable>
+                    </Animated.View>
+                  </View>
                 ) : null}
               </ScrollView>
             </View>
@@ -276,11 +372,19 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     width: '100%',
-    overflow: 'hidden',
+    overflow: 'visible',
+  },
+  playerHPFloating: {
+    position: 'absolute',
+    top: -18,
+    left: 0,
+    right: 0,
+    zIndex: 15,
   },
   background: {
     width: '100%',
     height: '100%',
+    overflow: 'hidden',
   },
   backgroundImage: {
     resizeMode: 'cover',
@@ -299,27 +403,26 @@ const styles = StyleSheet.create({
   contentArea: {
     flex: 1,
     paddingHorizontal: 36,
+    paddingTop: 14,
     paddingBottom: 10,
   },
   expandedContent: {
     flex: 1,
     marginTop: 10,
   },
-  startRunButton: {
-    height: 40,
-    borderRadius: 12,
+  startRunPulseWrapper: {
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  startRunImageButton: {
+    width: 168,
+    height: 168,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
   },
-  startRunButtonStart: {
-    backgroundColor: '#FFFFFF',
-  },
-  startRunText: {
-    fontWeight: '700',
-  },
-  startRunTextStart: {
-    color: '#1E3B2F',
+  startRunImage: {
+    width: 168,
+    height: 168,
   },
   endDayButton: {
     height: 40,
@@ -345,59 +448,85 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(18, 57, 39, 0.82)',
+    borderWidth: 1,
+    borderColor: 'rgba(227, 194, 94, 0.45)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.16)',
+    borderBottomColor: 'rgba(227, 194, 94, 0.35)',
   },
   habitMain: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: 8,
+    marginRight: 10,
   },
   checkboxBase: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
-    borderWidth: 1,
+    marginRight: 12,
+    borderWidth: 2,
   },
   checkboxActive: {
-    backgroundColor: '#57E389',
-    borderColor: '#57E389',
+    backgroundColor: '#7FD57D',
+    borderColor: '#AEDD86',
   },
   checkboxInactive: {
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderColor: 'rgba(255,255,255,0.45)',
+    backgroundColor: 'rgba(15, 45, 31, 0.88)',
+    borderColor: 'rgba(227, 194, 94, 0.72)',
   },
   checkboxText: {
-    color: '#153428',
-    fontSize: 14,
-    lineHeight: 16,
+    color: '#143524',
+    fontSize: 18,
+    lineHeight: 20,
     fontWeight: '800',
   },
   habitTextArea: {
     flex: 1,
   },
   habitTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '700',
+  },
+  habitMeta: {
+    marginTop: 4,
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '700',
   },
-  habitMeta: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
   streakText: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
   },
   emptyText: {
     marginTop: 12,
     fontSize: 14,
     lineHeight: 20,
+    textAlign: 'center',
+  },
+  emptyStateArea: {
+    alignItems: 'center',
+    paddingBottom: 16,
+  },
+  createHabitPulseWrapper: {
+    marginTop: 8,
+  },
+  createHabitImageButton: {
+    width: 84,
+    height: 84,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  createHabitImage: {
+    width: 84,
+    height: 84,
   },
 });

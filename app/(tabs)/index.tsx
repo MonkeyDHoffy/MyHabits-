@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Platform, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
@@ -95,6 +96,7 @@ export default function HomeScreen() {
   const [enemyDamageEvent, setEnemyDamageEvent] = useState<DamageEvent | null>(null);
   const previousEnemyHPRef = useRef(run.enemyHP);
   const damageEventIdRef = useRef(0);
+  const isFocused = useIsFocused();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const imageSource = getBackgroundImage(backgroundState);
@@ -110,11 +112,17 @@ export default function HomeScreen() {
     getClosedDrawerHeight(effectiveHeight),
     verticalLetterboxInset
   );
+  const shouldPulseHabitButtons = habits.length === 0;
 
   // Öffnet das Menü über den rechten Header-Button.
   function handleHeaderRightPress() {
     router.push('/menu');
   }
+
+  // Führt direkt zur Gewohnheiten-Seite, damit der Run vorbereitet werden kann.
+  const handleGoToGoodHabits = useCallback(() => {
+    router.push('/good-habits');
+  }, [router]);
 
   // Aktualisiert die Viewport-Maße für korrekte Letterbox-Berechnung.
   const handleViewportLayout = useCallback((event: LayoutChangeEvent) => {
@@ -122,8 +130,21 @@ export default function HomeScreen() {
     setViewportHeight(event.nativeEvent.layout.height);
   }, []);
 
+  // Löscht offene Damage-Events beim Verlassen der Seite.
+  useEffect(() => {
+    if (!isFocused) {
+      setEnemyDamageEvent(null);
+      previousEnemyHPRef.current = run.enemyHP;
+    }
+  }, [isFocused, run.enemyHP]);
+
   // Erzeugt ein Damage-Event, sobald die Gegner-HP sinkt.
   useEffect(() => {
+    if (!isFocused) {
+      previousEnemyHPRef.current = run.enemyHP;
+      return;
+    }
+
     const previousEnemyHP = previousEnemyHPRef.current;
     const damageAmount = previousEnemyHP - run.enemyHP;
 
@@ -137,7 +158,7 @@ export default function HomeScreen() {
     }
 
     previousEnemyHPRef.current = run.enemyHP;
-  }, [run.enemyHP]);
+  }, [isFocused, run.enemyHP]);
 
   return (
     <View style={styles.viewport} onLayout={handleViewportLayout}>
@@ -145,7 +166,10 @@ export default function HomeScreen() {
       <ScreenHeader
         minimumHeight={headerMinimumHeight}
         onPressRight={handleHeaderRightPress}
+        useLeftHomeImage
+        pulseLeftHomeImage={shouldPulseHabitButtons}
         rightAccessibilityLabel="Menü öffnen"
+        useRightGearImage
         isRunActive={run.isActive}
         enemyHP={run.enemyHP}
         maxHP={maxHP}
@@ -170,6 +194,7 @@ export default function HomeScreen() {
         weeklyJokers={run.weeklyJokers}
         dailyProgress={run.dailyProgress}
         onStartRun={startRun}
+        onOpenGoodHabits={handleGoToGoodHabits}
         onEndDayForDevelopment={advanceRunDayForDevelopment}
         onToggleHabitForToday={toggleHabitForToday}
       />

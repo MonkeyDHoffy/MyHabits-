@@ -103,6 +103,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // Startet einen neuen Run mit vollem HP und frischem Daily-Progress.
   const startRun = useCallback(() => {
+    if (habits.length === 0) {
+      return;
+    }
+
     const nextProgress = createDailyProgress(habits);
 
     setRun({

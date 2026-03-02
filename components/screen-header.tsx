@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useMemo } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Animated, Image, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HPBar } from '@/components/hp-bar';
@@ -15,25 +15,15 @@ type ScreenHeaderProps = {
   rightAccessibilityLabel?: string;
   showRightButton?: boolean;
   useLeftBackImage?: boolean;
+  useLeftHomeImage?: boolean;
+  pulseLeftHomeImage?: boolean;
+  useRightGearImage?: boolean;
   minimumHeight?: number;
   isRunActive?: boolean;
   enemyHP?: number;
   maxHP?: number;
   runDayNumber?: number;
 };
-
-// Erzeugt dynamische Styles für den oberen Safe-Area-Bereich.
-function createInsetStyles(topInset: number, minimumHeight: number) {
-  const baseHeaderHeight = topInset + HEADER_CONTENT_HEIGHT;
-  const headerHeight = Math.max(baseHeaderHeight, minimumHeight);
-
-  return StyleSheet.create({
-    headerInset: {
-      height: headerHeight,
-      paddingTop: topInset,
-    },
-  });
-}
 
 // Rendert den oberen Header mit Holz-Hintergrund und konfigurierbaren Aktionen.
 export function ScreenHeader({
@@ -43,6 +33,9 @@ export function ScreenHeader({
   rightAccessibilityLabel = 'Header Aktion',
   showRightButton = true,
   useLeftBackImage = false,
+  useLeftHomeImage = false,
+  pulseLeftHomeImage = false,
+  useRightGearImage = false,
   minimumHeight = 0,
   isRunActive = false,
   enemyHP = 0,
@@ -51,7 +44,43 @@ export function ScreenHeader({
 }: ScreenHeaderProps) {
   const router = useRouter();
   const { top } = useSafeAreaInsets();
-  const insetStyles = useMemo(() => createInsetStyles(top, minimumHeight), [minimumHeight, top]);
+  const headerHeight = useMemo(() => {
+    const baseHeaderHeight = top + HEADER_CONTENT_HEIGHT;
+    return Math.max(baseHeaderHeight, minimumHeight);
+  }, [minimumHeight, top]);
+  const leftPulseScale = useRef(new Animated.Value(1)).current;
+
+  // Lässt den linken Home-Button pulsieren, solange der Zustand aktiv ist.
+  useEffect(() => {
+    if (!useLeftHomeImage || !pulseLeftHomeImage) {
+      leftPulseScale.stopAnimation();
+      leftPulseScale.setValue(1);
+      return;
+    }
+
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(leftPulseScale, {
+          toValue: 1.12,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(leftPulseScale, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    pulseLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+      leftPulseScale.stopAnimation();
+      leftPulseScale.setValue(1);
+    };
+  }, [leftPulseScale, pulseLeftHomeImage, useLeftHomeImage]);
 
   // Öffnet die Seite für gute Gewohnheiten/Vorsätze.
   const handleGoToGoodHabits = useCallback(() => {
@@ -62,50 +91,83 @@ export function ScreenHeader({
   const handleLeftButtonPress = onPressLeft ?? handleGoToGoodHabits;
 
   return (
-    <View style={[styles.headerContainer, insetStyles.headerInset]}>
-      <Image
-        source={require('@/assets/background/wood.png')}
-        resizeMode="cover"
-        style={styles.headerBackgroundImage}
-      />
+    <>
+      <View style={[styles.headerContainer, { height: headerHeight, paddingTop: top }]}> 
+        <Image
+          source={require('@/assets/background/wood.png')}
+          resizeMode="cover"
+          style={styles.headerBackgroundImage}
+        />
 
-      <View style={styles.headerContent}>
-        <Pressable
-          style={useLeftBackImage ? styles.backImageButton : styles.headerButton}
-          onPress={handleLeftButtonPress}
-          accessibilityRole="button"
-          accessibilityLabel={leftAccessibilityLabel}
-        >
-          {useLeftBackImage ? (
-            <Image
-              source={require('@/assets/images/buttons/back.png')}
-              style={styles.backButtonImage}
-              resizeMode="contain"
-            />
-          ) : null}
-        </Pressable>
+        <View style={styles.headerContent}>
+          <Animated.View style={useLeftHomeImage ? { transform: [{ scale: leftPulseScale }] } : undefined}>
+            <Pressable
+              style={
+                useLeftBackImage
+                  ? styles.backImageButton
+                  : useLeftHomeImage
+                    ? styles.leftHomeImageButton
+                    : styles.headerButton
+              }
+              onPress={handleLeftButtonPress}
+              accessibilityRole="button"
+              accessibilityLabel={leftAccessibilityLabel}
+            >
+              {useLeftBackImage ? (
+                <Image
+                  source={require('@/assets/images/buttons/back.png')}
+                  style={styles.backButtonImage}
+                  resizeMode="contain"
+                />
+              ) : useLeftHomeImage ? (
+                <Image
+                  source={require('@/assets/images/buttons/0d6c27d6-40e7-4ad5-9111-906ea77465fa.png')}
+                  style={styles.leftHomeImage}
+                  resizeMode="contain"
+                />
+              ) : null}
+            </Pressable>
+          </Animated.View>
 
-        <View style={styles.centerArea}>
-          {isRunActive ? (
-            <View>
-              <HPBar label="Schweinehund" current={enemyHP} max={maxHP} fillColor="#FF6B6B" />
+          <View style={styles.centerArea}>
+            {isRunActive ? (
               <ThemedText style={styles.dayCounter} lightColor="#FFFFFF" darkColor="#FFFFFF">
                 {`Tag ${runDayNumber}`}
               </ThemedText>
-            </View>
+            ) : null}
+          </View>
+
+          {showRightButton ? (
+            <Pressable
+              style={useRightGearImage ? styles.rightImageButton : styles.headerButton}
+              onPress={onPressRight}
+              accessibilityRole="button"
+              accessibilityLabel={rightAccessibilityLabel}
+            >
+              {useRightGearImage ? (
+                <Image
+                  source={require('@/assets/images/buttons/gear.png')}
+                  style={styles.rightGearImage}
+                  resizeMode="contain"
+                />
+              ) : null}
+            </Pressable>
           ) : null}
         </View>
-
-        {showRightButton ? (
-          <Pressable
-            style={styles.headerButton}
-            onPress={onPressRight}
-            accessibilityRole="button"
-            accessibilityLabel={rightAccessibilityLabel}
-          />
-        ) : null}
       </View>
-    </View>
+
+      {isRunActive ? (
+        <View style={[styles.enemyHPBarArea, { top: headerHeight }]}>
+          <HPBar
+            label="Schweinehund"
+            current={enemyHP}
+            max={maxHP}
+            fillColor="#FF6B6B"
+            variant="enemy"
+          />
+        </View>
+      ) : null}
+    </>
   );
 }
 
@@ -118,6 +180,12 @@ const styles = StyleSheet.create({
     zIndex: 20,
     overflow: 'hidden',
     backgroundColor: '#2f2a23',
+  },
+  enemyHPBarArea: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 19,
   },
   headerBackgroundImage: {
     position: 'absolute',
@@ -140,9 +208,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
   },
   dayCounter: {
-    marginTop: 4,
-    fontSize: 12,
-    lineHeight: 16,
+    marginTop: 6,
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: 'center',
     fontWeight: '700',
   },
@@ -158,8 +226,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  leftHomeImageButton: {
+    width: 84,
+    height: 84,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rightImageButton: {
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   backButtonImage: {
     width: 74,
     height: 74,
+  },
+  leftHomeImage: {
+    width: 84,
+    height: 84,
+  },
+  rightGearImage: {
+    width: 56,
+    height: 56,
   },
 });

@@ -134,9 +134,11 @@ export function ScreenHeader({
 
           <View style={styles.centerArea}>
             {isRunActive ? (
-              <ThemedText style={styles.dayCounter} lightColor="#FFFFFF" darkColor="#FFFFFF">
-                {`Tag ${runDayNumber}`}
-              </ThemedText>
+              <View style={styles.dayCounterBadge}>
+                <ThemedText style={styles.dayCounter} lightColor="#F3D98A" darkColor="#F3D98A">
+                  {`TAG ${runDayNumber}`}
+                </ThemedText>
+              </View>
             ) : null}
           </View>
 
@@ -207,12 +209,28 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 12,
   },
+  dayCounterBadge: {
+    alignSelf: 'center',
+    minWidth: 118,
+    height: 34,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#D8B75A',
+    backgroundColor: 'rgb(24, 58, 41)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   dayCounter: {
-    marginTop: 6,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 18,
+    lineHeight: 22,
     textAlign: 'center',
-    fontWeight: '700',
+    fontWeight: '900',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    textShadowColor: 'rgba(90, 18, 28, 0.95)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 3,
   },
   headerButton: {
     width: 34,

@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
@@ -128,36 +129,72 @@ function HabitRow({
 }: HabitRowProps) {
   const isCompleted = isHabitCompletedToday(dailyProgress, habit.id);
   const jokerCount = weeklyJokers[habit.id] ?? 0;
+  const gradientShiftProgress = useRef(new Animated.Value(isCompleted ? 1 : 0)).current;
+  const gradientTranslateX = gradientShiftProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-38, 34],
+  });
+
+  useEffect(() => {
+    Animated.timing(gradientShiftProgress, {
+      toValue: isCompleted ? 1 : 0,
+      duration: 240,
+      useNativeDriver: true,
+    }).start();
+  }, [gradientShiftProgress, isCompleted]);
+
   const handleToggleHabit = useCallback(() => {
     onToggleHabitForToday(habit.id);
   }, [habit.id, onToggleHabitForToday]);
 
+  const checkedGradientColors = ['#103F2C', '#1F6A45', '#0d361d', '#103F2C', '#2A7347'] as const;
+  const uncheckedGradientColors = ['#0D261B', '#133628', '#194532', '#133628'] as const;
+  const gradientColors = isCompleted ? checkedGradientColors : uncheckedGradientColors;
+
   return (
     <View style={styles.habitRow}>
-      <Pressable
-        style={styles.habitMain}
-        onPress={handleToggleHabit}
-        disabled={!isRunActive}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: isCompleted }}
-        accessibilityLabel={`${habit.title} heute erledigt`}>
-        <View style={[styles.checkboxBase, isCompleted ? styles.checkboxActive : styles.checkboxInactive]}>
-          <ThemedText style={styles.checkboxText}>{isCompleted ? '✓' : ''}</ThemedText>
-        </View>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.habitGradientLayer,
+          styles.habitGradientOverscan,
+          { transform: [{ translateX: gradientTranslateX }] },
+        ]}
+      >
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: -3, y: 7.9 }}
+          style={styles.habitGradientFill}
+        />
+      </Animated.View>
 
-        <View style={styles.habitTextArea}>
-          <ThemedText style={styles.habitTitle} lightColor="#F6F9EF" darkColor="#F6F9EF">
-            {habit.title}
-          </ThemedText>
-          <ThemedText style={styles.habitMeta} lightColor="#E8CF74" darkColor="#E8CF74">
-            {`Joker: ${jokerCount}`}
-          </ThemedText>
-        </View>
-      </Pressable>
+      <View style={styles.habitRowContent}>
+        <Pressable
+          style={styles.habitMain}
+          onPress={handleToggleHabit}
+          disabled={!isRunActive}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isCompleted }}
+          accessibilityLabel={`${habit.title} heute erledigt`}>
+          <View style={[styles.checkboxBase, isCompleted ? styles.checkboxActive : styles.checkboxInactive]}>
+            <ThemedText style={styles.checkboxText}>{isCompleted ? '✓' : ''}</ThemedText>
+          </View>
 
-      <ThemedText style={styles.streakText} lightColor="#DDE9C9" darkColor="#DDE9C9">
-        {`+${habit.positiveStreak} / -${habit.negativeStreak}`}
-      </ThemedText>
+          <View style={styles.habitTextArea}>
+            <ThemedText style={styles.habitTitle} lightColor="#F6F9EF" darkColor="#F6F9EF">
+              {habit.title}
+            </ThemedText>
+            <ThemedText style={styles.habitMeta} lightColor="#E8CF74" darkColor="#E8CF74">
+              {`Joker: ${jokerCount}`}
+            </ThemedText>
+          </View>
+        </Pressable>
+
+        <ThemedText style={styles.streakText} lightColor="#DDE9C9" darkColor="#DDE9C9">
+          {`+${habit.positiveStreak} / -${habit.negativeStreak}`}
+        </ThemedText>
+      </View>
     </View>
   );
 }
@@ -496,18 +533,32 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   habitRow: {
+    position: 'relative',
+    overflow: 'hidden',
+    marginBottom: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(227, 194, 94, 0.45)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(227, 194, 94, 0.35)',
+  },
+  habitGradientLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  habitGradientOverscan: {
+    left: '-50%',
+    width: '180%',
+  },
+  habitGradientFill: {
+    flex: 1,
+  },
+  habitRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 14,
-    marginBottom: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(18, 57, 39, 0.82)',
-    borderWidth: 1,
-    borderColor: 'rgba(227, 194, 94, 0.45)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(227, 194, 94, 0.35)',
   },
   habitMain: {
     flexDirection: 'row',

@@ -14,7 +14,7 @@ const MENU_GRADIENT_END = { x: 1, y: 1 } as const;
 // Rendert die Menü-Seite mit zentralen Unterpunkten.
 export default function MenuScreen() {
   const router = useRouter();
-  const { run, startRun, endRun } = useGame();
+  const { run, startRun, endRun, isDevMode, toggleDevMode } = useGame();
 
   // Führt zur vorherigen Seite zurück.
   const handleGoBack = useCallback(() => {
@@ -53,6 +53,11 @@ export default function MenuScreen() {
     router.back();
   }, [endRun, router, run.isActive]);
 
+  // Schaltet den Dev-Modus für Debug-Funktionen um.
+  const handleToggleDevMode = useCallback(() => {
+    toggleDevMode();
+  }, [toggleDevMode]);
+
   return (
     <LinearGradient
       colors={MENU_GRADIENT_COLORS}
@@ -85,6 +90,12 @@ export default function MenuScreen() {
 
         <Pressable style={styles.menuButton} onPress={handleEndRun} accessibilityRole="button">
           <ThemedText style={styles.menuButtonText}>Run beenden</ThemedText>
+        </Pressable>
+
+        <Pressable style={styles.menuButton} onPress={handleToggleDevMode} accessibilityRole="button">
+          <ThemedText style={styles.menuButtonText}>
+            {`Dev Modus: ${isDevMode ? 'AN' : 'AUS'}`}
+          </ThemedText>
         </Pressable>
       </View>
     </LinearGradient>

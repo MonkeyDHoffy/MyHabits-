@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Platform, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 
 import { BottomDrawer } from '@/components/bottom-drawer';
+import type { DamageEvent } from '@/components/damage-effects';
 import { PigCanvasBox } from '@/components/pig-canvas-box';
 import { ScreenHeader } from '@/components/screen-header';
 import { useGame } from '@/context/game-context';
@@ -82,6 +83,7 @@ export default function HomeScreen() {
     habits,
     run,
     maxHP,
+    isDevMode,
     startRun,
     advanceRunDayForDevelopment,
     toggleHabitForToday,
@@ -90,6 +92,9 @@ export default function HomeScreen() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
+  const [enemyDamageEvent, setEnemyDamageEvent] = useState<DamageEvent | null>(null);
+  const previousEnemyHPRef = useRef(run.enemyHP);
+  const damageEventIdRef = useRef(0);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const imageSource = getBackgroundImage(backgroundState);
@@ -117,6 +122,23 @@ export default function HomeScreen() {
     setViewportHeight(event.nativeEvent.layout.height);
   }, []);
 
+  // Erzeugt ein Damage-Event, sobald die Gegner-HP sinkt.
+  useEffect(() => {
+    const previousEnemyHP = previousEnemyHPRef.current;
+    const damageAmount = previousEnemyHP - run.enemyHP;
+
+    if (damageAmount > 0) {
+      damageEventIdRef.current += 1;
+
+      setEnemyDamageEvent({
+        id: damageEventIdRef.current,
+        amount: Math.round(damageAmount),
+      });
+    }
+
+    previousEnemyHPRef.current = run.enemyHP;
+  }, [run.enemyHP]);
+
   return (
     <View style={styles.viewport} onLayout={handleViewportLayout}>
       <Image source={imageSource} style={styles.image} resizeMode="contain" />
@@ -132,6 +154,7 @@ export default function HomeScreen() {
       <PigCanvasBox
         headerMinimumHeight={headerMinimumHeight}
         drawerClosedHeight={closedDrawerHeight}
+        enemyDamageEvent={enemyDamageEvent}
       />
       <BottomDrawer
         isOpen={isDrawerOpen}
@@ -140,6 +163,7 @@ export default function HomeScreen() {
         closedHeight={closedDrawerHeight}
         containerHeight={effectiveHeight}
         isRunActive={run.isActive}
+        isDevMode={isDevMode}
         playerHP={run.playerHP}
         maxHP={maxHP}
         habits={habits}

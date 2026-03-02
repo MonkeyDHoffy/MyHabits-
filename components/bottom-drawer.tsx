@@ -25,6 +25,7 @@ type BottomDrawerProps = {
   closedHeight: number;
   containerHeight?: number;
   isRunActive: boolean;
+  isDevMode: boolean;
   playerHP: number;
   maxHP: number;
   habits: HabitItem[];
@@ -175,6 +176,7 @@ export function BottomDrawer({
   closedHeight,
   containerHeight,
   isRunActive,
+  isDevMode,
   playerHP,
   maxHP,
   habits,
@@ -240,7 +242,7 @@ export function BottomDrawer({
                 </Pressable>
               ) : null}
 
-              {isRunActive ? (
+              {isRunActive && isDevMode ? (
                 <Pressable
                   style={styles.endDayButton}
                   onPress={onEndDayForDevelopment}

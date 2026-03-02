@@ -15,6 +15,7 @@ type GameContextValue = {
   run: RunState;
   maxHP: number;
   isHydrated: boolean;
+  isDevMode: boolean;
   addHabit: (title: string, targetPerWeek: number, type: HabitType) => void;
   deleteHabit: (habitId: string) => void;
   startRun: () => void;
@@ -22,6 +23,7 @@ type GameContextValue = {
   endRun: () => void;
   resetRun: () => void;
   toggleHabitForToday: (habitId: string) => void;
+  toggleDevMode: () => void;
 };
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -31,6 +33,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [habits, setHabits] = useState<HabitItem[]>([]);
   const [run, setRun] = useState<RunState>(createInactiveRun());
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isDevMode, setIsDevMode] = useState(false);
 
   // Lädt den gespeicherten Zustand einmal beim App-Start.
   useEffect(() => {
@@ -183,12 +186,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setRun(toggleResult.nextRun);
   }, [habits, run]);
 
+  // Schaltet den Dev-Modus für Debug-UI ein oder aus.
+  const toggleDevMode = useCallback(() => {
+    setIsDevMode((currentValue) => !currentValue);
+  }, []);
+
   const value = useMemo(() => {
     return {
       habits,
       run,
       maxHP: MAX_HP,
       isHydrated,
+      isDevMode,
       addHabit,
       deleteHabit,
       startRun,
@@ -196,6 +205,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       endRun,
       resetRun,
       toggleHabitForToday,
+      toggleDevMode,
     };
   }, [
     addHabit,
@@ -204,9 +214,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     endRun,
     habits,
     isHydrated,
+    isDevMode,
     resetRun,
     run,
     startRun,
+    toggleDevMode,
     toggleHabitForToday,
   ]);
 

@@ -321,6 +321,7 @@ export function BottomDrawer({
           fillColor="#FF6B6B"
           variant="enemy"
           showValue={isRunActive}
+          flatBottomCorners
         />
       </View>
 

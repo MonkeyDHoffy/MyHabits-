@@ -14,6 +14,8 @@ type HPBarProps = {
   fillColor: string;
   variant?: 'default' | 'player' | 'enemy';
   showValue?: boolean;
+  flatTopCorners?: boolean;
+  flatBottomCorners?: boolean;
 };
 
 // Klemmt einen Wert sicher zwischen 0 und max.
@@ -41,7 +43,16 @@ function createDynamicStyles(fillPercent: number, fillColor: string) {
 }
 
 // Rendert einen kompakten HP-Balken mit Label und Zahlenwert.
-export function HPBar({ label, current, max, fillColor, variant = 'default', showValue = true }: HPBarProps) {
+export function HPBar({
+  label,
+  current,
+  max,
+  fillColor,
+  variant = 'default',
+  showValue = true,
+  flatTopCorners = false,
+  flatBottomCorners = false,
+}: HPBarProps) {
   const fillPercent = getFillPercent(current, max);
   const dynamicStyles = useMemo(() => {
     return createDynamicStyles(fillPercent, fillColor);
@@ -80,7 +91,16 @@ export function HPBar({ label, current, max, fillColor, variant = 'default', sho
   });
 
   if (variant === 'player' || variant === 'enemy') {
-    const trackStyle = variant === 'player' ? styles.playerTrack : styles.enemyTrack;
+    const trackStyle = [
+      variant === 'player' ? styles.playerTrack : styles.enemyTrack,
+      flatTopCorners ? styles.themedTrackFlatTop : null,
+      flatBottomCorners ? styles.themedTrackFlatBottom : null,
+    ];
+    const fillClipStyle = [
+      styles.playerFillClip,
+      flatTopCorners ? styles.themedFillClipFlatTop : null,
+      flatBottomCorners ? styles.themedFillClipFlatBottom : null,
+    ];
     const gradientColors =
       variant === 'player'
         ? PLAYER_GRADIENT_COLORS
@@ -89,7 +109,7 @@ export function HPBar({ label, current, max, fillColor, variant = 'default', sho
     return (
       <View style={styles.playerContainer}>
         <View style={trackStyle}>
-          <View style={[styles.playerFillClip, dynamicStyles.fill]}>
+          <View style={[fillClipStyle, dynamicStyles.fill]}>
             <Animated.View style={[styles.playerGradientMover, { transform: [{ translateX: gradientTranslateX }] }]}>
               <LinearGradient
                 colors={gradientColors}
@@ -182,6 +202,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
   },
+  themedTrackFlatTop: {
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
+  themedTrackFlatBottom: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
   playerFillClip: {
     position: 'absolute',
     top: 0,
@@ -189,6 +217,14 @@ const styles = StyleSheet.create({
     left: 0,
     borderRadius: 999,
     overflow: 'hidden',
+  },
+  themedFillClipFlatTop: {
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
+  themedFillClipFlatBottom: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   playerGradientMover: {
     width: '170%',

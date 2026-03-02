@@ -166,6 +166,7 @@ export function ScreenHeader({
           fillColor="#57E389"
           variant="player"
           showValue={isRunActive}
+          flatTopCorners
         />
       </View>
     </>

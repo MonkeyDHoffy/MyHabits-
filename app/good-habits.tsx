@@ -8,7 +8,7 @@ import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { useGame, type HabitItem } from '@/context/game-context';
 
-const GOOD_HABITS_GRADIENT_COLORS = ['#0f2a1f', '#1c4a33', '#9b7a21'] as const;
+const GOOD_HABITS_GRADIENT_COLORS = ['#091d16', '#1a3e2c', '#4a1b20', '#a8862e'] as const;
 const GOOD_HABITS_GRADIENT_START = { x: 0, y: 0 } as const;
 const GOOD_HABITS_GRADIENT_END = { x: 1, y: 1 } as const;
 const GOOD_WEEK_OPTIONS = [1, 2, 3, 4, 5, 6, 7] as const;
@@ -77,10 +77,10 @@ function HabitCard({ item, onDeleteHabit }: HabitCardProps) {
       <ThemedText type="defaultSemiBold" lightColor="#FFFFFF" darkColor="#FFFFFF">
         {item.title}
       </ThemedText>
-      <ThemedText style={styles.habitMeta} lightColor="#F4F4F4" darkColor="#F4F4F4">
+      <ThemedText style={styles.habitMeta} lightColor="#E8CF74" darkColor="#E8CF74">
         {`${item.targetPerWeek}x pro Woche · ${typeLabel}`}
       </ThemedText>
-      <ThemedText style={styles.habitMeta} lightColor="#EDEDED" darkColor="#EDEDED">
+      <ThemedText style={styles.habitMeta} lightColor="#DDE9C9" darkColor="#DDE9C9">
         {`Positiv: ${item.positiveStreak} · Negativ: ${item.negativeStreak}`}
       </ThemedText>
 
@@ -232,7 +232,7 @@ export default function GoodHabitsScreen() {
               Gewohnheit
             </ThemedText>
 
-            <ThemedText style={styles.fieldLabel} lightColor="#FFFFFF" darkColor="#FFFFFF">
+            <ThemedText style={styles.fieldLabel} lightColor="#E8CF74" darkColor="#E8CF74">
               Titel / Name
             </ThemedText>
             <TextInput
@@ -243,7 +243,7 @@ export default function GoodHabitsScreen() {
               style={styles.titleInput}
             />
 
-            <ThemedText style={styles.fieldLabel} lightColor="#FFFFFF" darkColor="#FFFFFF">
+            <ThemedText style={styles.fieldLabel} lightColor="#E8CF74" darkColor="#E8CF74">
               {getWeeklyLabelByType(habitType)}
             </ThemedText>
             <View style={styles.optionRow}>
@@ -257,7 +257,7 @@ export default function GoodHabitsScreen() {
               ))}
             </View>
 
-            <ThemedText style={styles.fieldLabel} lightColor="#FFFFFF" darkColor="#FFFFFF">
+            <ThemedText style={styles.fieldLabel} lightColor="#E8CF74" darkColor="#E8CF74">
               Typ
             </ThemedText>
             <View style={styles.typeRow}>
@@ -281,14 +281,14 @@ export default function GoodHabitsScreen() {
               <ThemedText style={styles.addButtonText}>Gewohnheit hinzufügen</ThemedText>
             </Pressable>
 
-            <ThemedText style={styles.sectionTitle} lightColor="#FFFFFF" darkColor="#FFFFFF">
+            <ThemedText style={styles.sectionTitle} lightColor="#E8CF74" darkColor="#E8CF74">
               Angelegte Gewohnheiten
             </ThemedText>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <ThemedText style={styles.emptyText} lightColor="#EFEFEF" darkColor="#EFEFEF">
+            <ThemedText style={styles.emptyText} lightColor="#E8CF74" darkColor="#E8CF74">
               Noch keine Gewohnheiten angelegt.
             </ThemedText>
           </View>
@@ -321,7 +321,9 @@ const styles = StyleSheet.create({
   formCard: {
     borderRadius: 16,
     padding: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.26)',
+    backgroundColor: 'rgba(10, 33, 24, 0.86)',
+    borderWidth: 1,
+    borderColor: 'rgba(216, 183, 90, 0.55)',
     marginBottom: 16,
   },
   fieldLabel: {
@@ -333,11 +335,11 @@ const styles = StyleSheet.create({
   titleInput: {
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(13, 45, 31, 0.92)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.35)',
+    borderColor: 'rgba(216, 183, 90, 0.6)',
     paddingHorizontal: 12,
-    color: '#FFFFFF',
+    color: '#F6F9EF',
     fontSize: 16,
   },
   optionRow: {
@@ -354,12 +356,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   optionButtonActive: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FFFFFF',
+    backgroundColor: '#D8B75A',
+    borderColor: '#D8B75A',
   },
   optionButtonInactive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: 'rgba(16, 53, 37, 0.75)',
+    borderColor: 'rgba(216, 183, 90, 0.5)',
   },
   optionText: {
     fontSize: 14,
@@ -367,7 +369,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   optionTextActive: {
-    color: '#19352A',
+    color: '#163025',
   },
   optionTextInactive: {
     color: '#FFFFFF',
@@ -385,12 +387,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   typeButtonActive: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FFFFFF',
+    backgroundColor: '#D8B75A',
+    borderColor: '#D8B75A',
   },
   typeButtonInactive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: 'rgba(61, 22, 28, 0.82)',
+    borderColor: 'rgba(216, 183, 90, 0.5)',
   },
   typeButtonText: {
     fontSize: 15,
@@ -398,7 +400,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   typeTextActive: {
-    color: '#19352A',
+    color: '#163025',
   },
   typeTextInactive: {
     color: '#FFFFFF',
@@ -407,12 +409,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#D8B75A',
+    borderWidth: 1,
+    borderColor: '#F0D98D',
     justifyContent: 'center',
     alignItems: 'center',
   },
   addButtonText: {
-    color: '#19352A',
+    color: '#173427',
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
@@ -426,7 +430,9 @@ const styles = StyleSheet.create({
   habitCard: {
     borderRadius: 12,
     padding: 14,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(12, 40, 29, 0.88)',
+    borderWidth: 1,
+    borderColor: 'rgba(216, 183, 90, 0.5)',
     marginBottom: 10,
   },
   habitMeta: {
@@ -441,10 +447,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(74, 27, 32, 0.95)',
+    borderWidth: 1,
+    borderColor: 'rgba(216, 183, 90, 0.72)',
   },
   deleteButtonText: {
-    color: '#19352A',
+    color: '#E8CF74',
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',

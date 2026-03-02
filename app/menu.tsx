@@ -7,7 +7,7 @@ import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { useGame } from '@/context/game-context';
 
-const MENU_GRADIENT_COLORS = ['#0f2a1f', '#1c4a33', '#9b7a21'] as const;
+const MENU_GRADIENT_COLORS = ['#091d16', '#1a3e2c', '#4a1b20', '#a8862e'] as const;
 const MENU_GRADIENT_START = { x: 0, y: 0 } as const;
 const MENU_GRADIENT_END = { x: 1, y: 1 } as const;
 
@@ -75,7 +75,7 @@ export default function MenuScreen() {
       />
 
       <View style={styles.contentArea}>
-        <ThemedText type="title" lightColor="#FFFFFF" darkColor="#FFFFFF">
+        <ThemedText type="title" lightColor="#E8CF74" darkColor="#E8CF74" style={styles.menuTitle}>
           Menü
         </ThemedText>
 
@@ -114,16 +114,24 @@ const styles = StyleSheet.create({
     paddingTop: 132,
     paddingHorizontal: 16,
   },
+  menuTitle: {
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
   menuButton: {
     marginTop: 12,
     height: 48,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(12, 40, 29, 0.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(216, 183, 90, 0.58)',
   },
   menuButtonText: {
-    color: '#19352A',
+    color: '#E8CF74',
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',

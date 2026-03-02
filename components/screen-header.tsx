@@ -1,12 +1,14 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Animated, Image, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Image, ImageBackground, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HPBar } from '@/components/hp-bar';
 import { ThemedText } from '@/components/themed-text';
 
 const HEADER_CONTENT_HEIGHT = 64;
+const HEADER_HP_BAR_HEIGHT = 28;
+const HEADER_BOTTOM_RADIUS = 9;
 
 type ScreenHeaderProps = {
   onPressLeft?: () => void;
@@ -93,14 +95,13 @@ export function ScreenHeader({
   const handleLeftButtonPress = onPressLeft ?? handleGoToGoodHabits;
 
   return (
-    <>
-      <View style={[styles.headerContainer, { height: headerHeight, paddingTop: top }]}> 
-        <Image
-          source={require('@/assets/background/wood.png')}
-          resizeMode="cover"
-          style={styles.headerBackgroundImage}
-        />
-
+    <View style={[styles.headerStack, { height: headerHeight + HEADER_HP_BAR_HEIGHT }]}> 
+      <ImageBackground
+        source={require('@/assets/background/wood.png')}
+        resizeMode="cover"
+        style={[styles.headerTopSection, { height: headerHeight, paddingTop: top }]}
+        imageStyle={styles.headerTopBackgroundImage}
+      >
         <View style={styles.headerContent}>
           <Animated.View style={useLeftHomeImage ? { transform: [{ scale: leftPulseScale }] } : undefined}>
             <Pressable
@@ -156,9 +157,9 @@ export function ScreenHeader({
             </Pressable>
           ) : null}
         </View>
-      </View>
+      </ImageBackground>
 
-      <View style={[styles.enemyHPBarArea, { top: headerHeight }]}>
+      <View style={styles.enemyHPBarArea}>
         <HPBar
           label="Spieler"
           current={playerHP}
@@ -169,34 +170,31 @@ export function ScreenHeader({
           flatTopCorners
         />
       </View>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
+  headerStack: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     zIndex: 20,
+  },
+  enemyHPBarArea: {
+    width: '100%',
+  },
+  headerTopSection: {
+    width: '100%',
+    borderBottomLeftRadius: HEADER_BOTTOM_RADIUS,
+    borderBottomRightRadius: HEADER_BOTTOM_RADIUS,
     overflow: 'hidden',
     backgroundColor: '#2f2a23',
   },
-  enemyHPBarArea: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    zIndex: 19,
-  },
-  headerBackgroundImage: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
+  headerTopBackgroundImage: {
+    borderBottomLeftRadius: HEADER_BOTTOM_RADIUS,
+    borderBottomRightRadius: HEADER_BOTTOM_RADIUS,
   },
   headerContent: {
     height: HEADER_CONTENT_HEIGHT,
